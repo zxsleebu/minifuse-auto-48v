@@ -10,6 +10,7 @@ This script is specifically designed for **Windows**.
 2.  **UsbDk** (USB Development Kit)
 3.  **libusb-1.0.dll**
 4.  **pyusb** library
+5.  Arturia Minifuse 1 or 2
 
 ## Installation Guide
 
