@@ -7,7 +7,12 @@ import os
 
 # --- CONFIGURATION ---
 VENDOR_ID = 0x1c75
-PRODUCT_ID = 0xaf90
+
+# Map Product IDs to Device Names
+SUPPORTED_PIDS = {
+    0xaf90: "Arturia MiniFuse 2",
+    0xaf80: "Arturia MiniFuse 1"
+}
 
 lib_file = "./libusb-1.0.dll"
 
@@ -18,7 +23,7 @@ if not os.path.exists(lib_file):
     sys.exit(1)
 
 def set_phantom_power(turn_on=True):
-    print(f"Looking for MiniFuse (VID: {hex(VENDOR_ID)}, PID: {hex(PRODUCT_ID)})...")
+    print(f"Looking for Arturia MiniFuse devices (VID: {hex(VENDOR_ID)})...")
 
     backend = usb.backend.libusb1.get_backend(find_library=lambda x: lib_file)
     
@@ -42,7 +47,17 @@ def set_phantom_power(turn_on=True):
         print(f"[-] Could not set UsbDk option: {e}")
         print("    (Proceeding anyway, but it might fail...)")
 
-    dev = usb.core.find(idVendor=VENDOR_ID, idProduct=PRODUCT_ID, backend=backend)
+    dev = None
+    device_name = "Unknown"
+
+    # Search for both MiniFuse 1 and 2
+    for pid, name in SUPPORTED_PIDS.items():
+        found = usb.core.find(idVendor=VENDOR_ID, idProduct=pid, backend=backend)
+        if found:
+            dev = found
+            device_name = name
+            print(f"[+] Found {device_name} (PID: {hex(pid)}) via UsbDk backend!")
+            break
 
     if dev is None:
         print("[-] Device not found.")
@@ -51,8 +66,6 @@ def set_phantom_power(turn_on=True):
         print("    3. Did you reboot after installing UsbDk?")
         return
 
-    print("[+] Device found via UsbDk backend!")
-
     bmRequestType = 0x21
     bRequest = 0x22
     wValue = 0x0400
@@ -60,7 +73,7 @@ def set_phantom_power(turn_on=True):
     data = b'\x01\x00' if turn_on else b'\x00\x00'
 
     try:
-        print(f"Sending +48V {'ON' if turn_on else 'OFF'} command...")
+        print(f"Sending +48V {'ON' if turn_on else 'OFF'} command to {device_name}...")
         dev.ctrl_transfer(bmRequestType, bRequest, wValue, wIndex, data)
         print("[+] SUCCESS! Phantom power switched.")
         
@@ -70,4 +83,8 @@ def set_phantom_power(turn_on=True):
              print("    Error: The library is not using UsbDk. Try reinstalling UsbDk.")
 
 if __name__ == "__main__":
-    set_phantom_power(True)
+    state = True
+    if len(sys.argv) > 1 and sys.argv[1].lower() == "off":
+        state = False
+        
+    set_phantom_power(state)
