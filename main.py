@@ -63,7 +63,7 @@ def toggle_phantom_power(turn_on):
     ]
     send_req.restype = ctypes.c_int
 
-    #https://github.com/mattgonzalez/ProductionTest/blob/5e85e334bc83d0486a2a22cf67c52ffc23ad0af4/Source/win32/usb/win/ehw.cpp#L1690
+    # https://github.com/mattgonzalez/ProductionTest/blob/5e85e334bc83d0486a2a22cf67c52ffc23ad0af4/Source/win32/usb/win/ehw.cpp#L1690
 
     val = 1 if turn_on else 0
     data = struct.pack('<H', val) # 2 Bytes (Little Endian)
