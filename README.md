@@ -1,6 +1,6 @@
 # Arturia MiniFuse CLI Control
 
-A Python script to programmatically toggle **+48V Phantom Power**, **Direct Mono** and **Instrument** toggle on **Arturia MiniFuse** audio interfaces.
+A Python script to programmatically toggle **+48V Phantom Power**, **Direct Mono** and **Instrument** on **Arturia MiniFuse** audio interfaces.
 
 This script is specifically designed for **Windows** and leverages the official Arturia driver API to control the hardware without interrupting audio streams.
 
