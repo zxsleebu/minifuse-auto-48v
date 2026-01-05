@@ -3,9 +3,14 @@ import sys
 import struct
 import os
 
+# Updated path from your snippet
 DLL_PATH = r"C:\Program Files\Arturia\MiniFuseAudioDriver\x64\arturiaminifuseusbaudioapi_x64.dll"
 
-def toggle_phantom_power(turn_on):
+# Control Selectors
+SELECTOR_PHANTOM_POWER = 4
+SELECTOR_DIRECT_MONO   = 5
+
+def set_minifuse_param(target_selector, turn_on):
     if not os.path.exists(DLL_PATH):
         print(f"[-] Error: DLL not found at {DLL_PATH}")
         return
@@ -31,24 +36,9 @@ def toggle_phantom_power(turn_on):
         print(f"[-] Failed to open device. Error Code: {res}")
         return
 
-    print(f"[*] Device opened. Handle: {handle.value}")
+    # print(f"[*] Device opened. Handle: {handle.value}")
 
-    # Based on tusbaudioapi.h
-    # https://github.com/mattgonzalez/ProductionTest/blob/5e85e334bc83d0486a2a22cf67c52ffc23ad0af4/Source/win32/usb/win/tusbaudioapi.h#L570
-    # https://github.com/lilltroll77/DCF/blob/e390673629f4d2548e638d4760e328cd2112f6af/tusbaudioapi.h#L1389
-    # 
-    # TUsbAudioStatus TUSBAUDIO_AudioControlRequestSet(
-    #    TUsbAudioHandle deviceHandle,
-    #    unsigned char entityID,
-    #    unsigned char request,
-    #    unsigned char controlSelector,
-    #    unsigned char channelOrMixerControl,
-    #    const void* paramBlock,
-    #    unsigned int paramBlockLength,
-    #    unsigned int* bytesTransferred,
-    #    unsigned int timeoutMillisecs
-    # );
-    
+    # TUsbAudioStatus TUSBAUDIO_AudioControlRequestSet(...)
     send_req = lib.TUSBAUDIO_AudioControlRequestSet
     send_req.argtypes = [
         ctypes.c_void_p,        # Handle
@@ -58,23 +48,28 @@ def toggle_phantom_power(turn_on):
         ctypes.c_ubyte,         # Channel
         ctypes.c_void_p,        # Buffer Pointer
         ctypes.c_uint,          # Buffer Length
-        ctypes.c_void_p,        # Bytes Transferred (Optional Pointer)
+        ctypes.c_void_p,        # Bytes Transferred
         ctypes.c_uint           # Timeout
     ]
     send_req.restype = ctypes.c_int
 
-    # https://github.com/mattgonzalez/ProductionTest/blob/5e85e334bc83d0486a2a22cf67c52ffc23ad0af4/Source/win32/usb/win/ehw.cpp#L1690
-
+    # Prepare Data
     val = 1 if turn_on else 0
-    data = struct.pack('<H', val) # 2 Bytes (Little Endian)
+    data = struct.pack('<H', val) # 2 Bytes
     buf = ctypes.create_string_buffer(data)
 
-    print(f"[*] Sending 48V {'ON' if turn_on else 'OFF'}...")
+    target_name = "Phantom Power" if target_selector == SELECTOR_PHANTOM_POWER else "Direct Mono"
+    print(f"[*] Setting {target_name} to {'ON' if turn_on else 'OFF'}...")
     
-    res = send_req(handle, 0, 34, 4, 0, buf, 2, None, 1000)
+    # Execute
+    # EntityID = 0
+    # Request = 34 (SET_CUR)
+    # Selector = Passed Argument (4 or 5)
+    # Channel = 0
+    res = send_req(handle, 0, 34, target_selector, 0, buf, 2, None, 1000)
 
     if res == 0:
-        print("[+] SUCCESS! Phantom Power toggled.")
+        print(f"[+] SUCCESS! {target_name} toggled.")
     else:
         print(f"[-] Command failed with Error Code: {res}")
 
@@ -82,8 +77,32 @@ def toggle_phantom_power(turn_on):
         lib.TUSBAUDIO_CloseDevice(handle)
 
 if __name__ == "__main__":
-    state = True
-    if len(sys.argv) > 1 and "off" in sys.argv[1].lower():
-        state = False
-    
-    toggle_phantom_power(state)
+    if len(sys.argv) < 2:
+        print("Usage:")
+        print("  python script.py power [on/off]")
+        print("  python script.py mono [on/off]")
+        sys.exit(1)
+
+    target_cmd = sys.argv[1].lower()
+    selector = None
+
+    if target_cmd == "power":
+        selector = SELECTOR_PHANTOM_POWER
+    elif target_cmd == "mono":
+        selector = SELECTOR_DIRECT_MONO
+    else:
+        print(f"[-] Unknown command: '{target_cmd}'. Use 'power' or 'mono'.")
+        sys.exit(1)
+
+    state = True # Default to ON
+    if len(sys.argv) > 2:
+        state_cmd = sys.argv[2].lower()
+        if state_cmd == "off":
+            state = False
+        elif state_cmd == "on":
+            state = True
+        else:
+            print(f"[-] Unknown state: '{state_cmd}'. Use 'on' or 'off'.")
+            sys.exit(1)
+
+    set_minifuse_param(selector, state)
