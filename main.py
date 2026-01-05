@@ -3,7 +3,6 @@ import sys
 import struct
 import os
 
-# Updated path from your snippet
 DLL_PATH = r"C:\Program Files\Arturia\MiniFuseAudioDriver\x64\arturiaminifuseusbaudioapi_x64.dll"
 
 # Control Selectors
@@ -53,7 +52,6 @@ def set_minifuse_param(target_selector, turn_on):
     ]
     send_req.restype = ctypes.c_int
 
-    # Prepare Data
     val = 1 if turn_on else 0
     data = struct.pack('<H', val) # 2 Bytes
     buf = ctypes.create_string_buffer(data)
