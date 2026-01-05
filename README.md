@@ -28,16 +28,16 @@ Open a terminal (Command Prompt/PowerShell) in the directory containing the scri
 python main.py [power|mono|inst] [on/off] (optional: channel number for inst [1-2])
 ```
 
-### Direct Mono
+### Example
 
-**Turn ON:**
+**Turn ON +48v:**
 ```bash
-python main.py mono on
+python main.py power on
 ```
 
-**Turn OFF:**
+**Turn OFF Instrument on Channel 1:**
 ```bash
-python main.py mono off
+python main.py inst off 1
 ```
 
 ## Technical Details
