@@ -1,6 +1,6 @@
 # Arturia MiniFuse CLI Control
 
-A Python script to programmatically toggle **+48V Phantom Power** and **Direct Mono** on **Arturia MiniFuse** audio interfaces.
+A Python script to programmatically toggle **+48V Phantom Power**, **Direct Mono** and **Instrument** toggle on **Arturia MiniFuse** audio interfaces.
 
 This script is specifically designed for **Windows** and leverages the official Arturia driver API to control the hardware without interrupting audio streams.
 
@@ -24,16 +24,8 @@ If you installed the Arturia software to a custom location, open the Python scri
 
 Open a terminal (Command Prompt/PowerShell) in the directory containing the script.
 
-### Phantom Power (+48V)
-
-**Turn ON:**
 ```bash
-python main.py power on
-```
-
-**Turn OFF:**
-```bash
-python main.py power off
+python main.py [power|mono|inst] [on/off] (optional: channel number for inst [1-2])
 ```
 
 ### Direct Mono
@@ -52,7 +44,7 @@ python main.py mono off
 
 **The Problem:** On Windows, audio interface drivers (ASIO/WASAPI) take exclusive control of the USB device interface. Methods using `pyusb` or `libusb` fail with `Access Denied` because they cannot claim the interface while audio is active.
 
-**The Solution:** Instead of attempting to inject raw USB packets via filter drivers, this script loads the official Thesycon/Arturia API DLL (`arturiaminifuseusbaudioapi_x64.dll`). It invokes the exported function `TUSBAUDIO_AudioControlRequestSet` to send specific Vendor Requests to the hardware using Control Selectors `0x04` (Phantom Power) and `0x05` (Direct Mono).
+**The Solution:** Instead of attempting to inject raw USB packets via filter drivers, this script loads the official Thesycon/Arturia API DLL. It invokes the exported function `TUSBAUDIO_AudioControlRequestSet` to send specific Vendor Requests to the hardware using Control Selectors `0x04` (Phantom Power), `0x05` (Direct Mono) and `0x00` (Instrument).
 
 ## Troubleshooting
 
